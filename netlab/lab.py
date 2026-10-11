@@ -56,8 +56,3 @@ class Lab:
             text=True,
             timeout=timeout,
         )
-
-    def ping(self, node: str, target: str, count: int = 3) -> PingResult:
-        # -W 1: wait at most 1 second for each reply, so failures are fast
-        result = self.exec(node, ["ping", "-c", str(count), "-W", "1", target])
-        return parse_ping(result.stdout)
