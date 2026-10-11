@@ -2,6 +2,8 @@ import pytest
 
 from netlab.lab import parse_ping
 
+# Real ping outputs captured from the lab, used as test input
+
 SUCCESS = """PING 10.0.2.10 (10.0.2.10) 56(84) bytes of data.
 64 bytes from 10.0.2.10: icmp_seq=1 ttl=62 time=0.102 ms
 64 bytes from 10.0.2.10: icmp_seq=2 ttl=62 time=0.056 ms
@@ -34,31 +36,35 @@ From 10.0.1.10 icmp_seq=2 Destination Host Unreachable
 """
 
 
-def test_successful_ping():
-    result = parse_ping(SUCCESS)
-    assert result.transmitted == 3
-    assert result.received == 3
-    assert result.ttl == 62
-    assert result.loss_percent == 0
+@pytest.mark.parametrize(
+    "sample, transmitted, received, ttl",
+    [
+        (SUCCESS, 3, 3, 62),
+        (TOTAL_LOSS, 3, 0, None),
+        (PARTIAL_LOSS, 3, 2, 62),
+        (HOST_UNREACHABLE, 2, 0, None),
+    ],
+    ids=["success", "total-loss", "partial-loss", "host-unreachable"],
+)
+def test_parse_ping_counts_and_ttl(sample, transmitted, received, ttl):
+    result = parse_ping(sample)
+    assert result.transmitted == transmitted
+    assert result.received == received
+    assert result.ttl == ttl
 
 
-def test_total_loss_has_no_ttl():
-    result = parse_ping(TOTAL_LOSS)
-    assert result.received == 0
-    assert result.ttl is None
-    assert result.loss_percent == 100
-
-
-def test_partial_loss():
-    result = parse_ping(PARTIAL_LOSS)
-    assert result.received == 2
-    assert result.loss_percent == pytest.approx(33.33, abs=0.01)
-
-
-def test_host_unreachable_with_errors():
-    result = parse_ping(HOST_UNREACHABLE)
-    assert result.transmitted == 2
-    assert result.received == 0
+@pytest.mark.parametrize(
+    "sample, expected_loss",
+    [
+        (SUCCESS, 0),
+        (TOTAL_LOSS, 100),
+        (PARTIAL_LOSS, 33.33),
+    ],
+    ids=["success", "total-loss", "partial-loss"],
+)
+def test_loss_percent(sample, expected_loss):
+    result = parse_ping(sample)
+    assert result.loss_percent == pytest.approx(expected_loss, abs=0.01)
 
 
 def test_output_is_kept_for_debugging():
