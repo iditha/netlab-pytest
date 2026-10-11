@@ -1,7 +1,8 @@
 import json
 import subprocess
 
-from netlab.lab import Lab, PingResult, parse_ping
+from netlab.lab import Lab
+from netlab.parsers import PingResult, parse_ping
 
 
 class Device:

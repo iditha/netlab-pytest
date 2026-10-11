@@ -1,6 +1,6 @@
 import pytest
 
-from netlab.lab import parse_ping
+from netlab.parsers import parse_ping
 
 # Real ping outputs captured from the lab, used as test input
 
