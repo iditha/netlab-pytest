@@ -1,5 +1,7 @@
 import subprocess
+import logging
 
+logger = logging.getLogger(__name__)
 
 class Lab:
     """Deploys a containerlab topology and runs commands inside its nodes."""
@@ -23,9 +25,12 @@ class Lab:
 
     def exec(self, node: str, command: list[str], timeout: int = 30):
         """Run a command inside a node, like `docker exec clab-<lab>-<node> ...`."""
-        return subprocess.run(
+        logger.info("%s $ %s", node, " ".join(command))
+        result = subprocess.run(
             ["docker", "exec", f"clab-{self.name}-{node}", *command],
             capture_output=True,
             text=True,
             timeout=timeout,
         )
+        logger.debug("%s exit=%s output:\n%s", node, result.returncode, result.stdout)
+        return result    
