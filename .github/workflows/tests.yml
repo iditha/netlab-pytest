@@ -14,6 +14,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
+      - run: ruff check .
       - run: python -m pytest tests/unit -v
 
   lab-tests:

@@ -1,5 +1,5 @@
-import subprocess
 import logging
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ class Lab:
         result = subprocess.run(
             ["docker", "exec", f"clab-{self.name}-{node}", *command],
             capture_output=True,
+            check=False,
             text=True,
             timeout=timeout,
         )
