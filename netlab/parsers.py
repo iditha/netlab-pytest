@@ -1,3 +1,4 @@
+import json
 import re
 from dataclasses import dataclass
 
@@ -25,3 +26,37 @@ def parse_ping(output: str) -> PingResult:
         ttl=int(ttls[-1]) if ttls else None,
         output=output,
     )
+
+
+@dataclass
+class OspfNeighbor:
+    router_id: str
+    state: str
+    interface: str
+    address: str
+
+
+def parse_ospf_neighbors(output: str) -> list[OspfNeighbor]:
+    """Parse FRR's ``show ip ospf neighbor json`` output."""
+    data = json.loads(output)
+    neighbors = []
+    for router_id, entries in data.get("neighbors", {}).items():
+        for entry in entries:
+            neighbors.append(
+                OspfNeighbor(
+                    router_id=router_id,
+                    state=entry["nbrState"].split("/")[0],
+                    interface=entry["ifaceName"].split(":")[0],
+                    address=entry["ifaceAddress"],
+                )
+            )
+    return neighbors
+
+
+def route_next_hops(route: dict) -> list[str]:
+    """Return gateway addresses for single-path or ECMP routes."""
+    if "nexthops" in route:
+        return [hop["gateway"] for hop in route["nexthops"] if "gateway" in hop]
+    if "gateway" in route:
+        return [route["gateway"]]
+    return []
